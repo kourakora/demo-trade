@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components  # 【追加】BGMを途切れさせないためのライブラリ
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -194,6 +195,30 @@ elif st.session_state.position < 0:
 else:
     st.sidebar.info("ノーポジション")
 
+# --- 【追加】BGMプレイヤー ---
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🎵 BGM設定")
+
+try:
+    with open("bgm.mp3", "rb") as f:
+        data = f.read()
+        b64 = base64.b64encode(data).decode()
+        # htmlファイルとして独立させることで、毎秒の画面更新時にも曲がリセットされません
+        bgm_html = f"""
+            <audio controls loop autoplay style="width: 100%;">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            </audio>
+            <style>
+                body {{ margin: 0; background-color: transparent; }}
+                audio {{ height: 40px; outline: none; }}
+            </style>
+        """
+        components.html(bgm_html, height=50)
+        st.sidebar.caption("※音が鳴らない場合は再生ボタンを押してください")
+except FileNotFoundError:
+    st.sidebar.warning("※「bgm.mp3」が見つかりません。app.pyと同じフォルダに入れてください。")
+# ------------------------------
+
 st.sidebar.markdown("---")
 display_count = st.sidebar.slider("表示件数（ズーム）", min_value=30, max_value=200, value=100, step=10)
 
@@ -204,7 +229,7 @@ if st.sidebar.button("▶ 手動で1単位進める"):
     generate_next_candle()
     st.rerun()
 
-# 【追加】ニュース速報のテロップ表示領域
+# ニュース速報のテロップ表示領域
 if st.session_state.current_news:
     st.error(f"🚨 **{st.session_state.current_news}**")
 
